@@ -1,0 +1,38 @@
+{
+  "question": "Quelle est la ponctualité de Bordeaux vers Paris en 2025 ?",
+  "seed": 1,
+  "appels": [
+    {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2025-01-01",
+        "fin": "2025-12-31",
+        "depart": "Bordeaux",
+        "arrivee": "Paris"
+      },
+      "resultat": {
+        "liaison": "BORDEAUX ST JEAN -> PARIS MONTPARNASSE",
+        "periode": "2025-01 à 2025-12",
+        "mois_couverts": 12,
+        "taux_ponctualite_pct": 83.6,
+        "taux_retard_pct": 16.4,
+        "ic95_bas_pct": 82.9,
+        "ic95_haut_pct": 84.3,
+        "niveau_confiance_pct": 95,
+        "trains_circules": 12369,
+        "trains_en_retard": 2027,
+        "seuils_retard_min": [
+          10
+        ],
+        "limites": "Le fichier compte tous les trains, ce n'est pas un sondage : l'intervalle traite chaque train comme un tirage indépendant et il est trop étroit, car les retards d'une même journée sont liés. Ces données ne prouvent pas pourquoi une liaison est en retard."
+      }
+    }
+  ],
+  "rejets": [],
+  "statut": "validee",
+  "reponse": "Le taux de ponctualité des trains TGV de Bordeaux à Paris en 2025 est de 83,6 %. Sur les 12 369 trains qui ont circulé, 2 027 sont arrivés en retard.",
+  "secondes": 47.7,
+  "mode": "systeme",
+  "tache": "t01",
+  "note": "juste"
+}

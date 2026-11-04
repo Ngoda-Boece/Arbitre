@@ -1,0 +1,210 @@
+[
+  {
+    "id": "t01",
+    "question": "Quelle est la ponctualité de Bordeaux vers Paris en 2025 ?",
+    "attendu": [
+      83.6
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2025",
+        "fin": "2025",
+        "depart": "BORDEAUX ST JEAN",
+        "arrivee": "PARIS MONTPARNASSE"
+      }
+    }
+  },
+  {
+    "id": "t02",
+    "question": "Quelle est la ponctualité de Paris vers Marseille en 2024 ?",
+    "attendu": [
+      90.5
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2024",
+        "fin": "2024",
+        "depart": "PARIS LYON",
+        "arrivee": "MARSEILLE ST CHARLES"
+      }
+    }
+  },
+  {
+    "id": "t03",
+    "question": "Quelle est la ponctualité de Nantes vers Paris en 2023 ?",
+    "attendu": [
+      87.7
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2023",
+        "fin": "2023",
+        "depart": "NANTES",
+        "arrivee": "PARIS MONTPARNASSE"
+      }
+    }
+  },
+  {
+    "id": "t04",
+    "question": "Quelle est la ponctualité de tout le réseau TGV en 2025 ?",
+    "attendu": [
+      84.9
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2025",
+        "fin": "2025"
+      }
+    }
+  },
+  {
+    "id": "t05",
+    "question": "Quelle est la ponctualité de Rennes vers Paris en juillet 2025 ?",
+    "attendu": [
+      84.6
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2025-07",
+        "fin": "2025-07",
+        "depart": "RENNES",
+        "arrivee": "PARIS MONTPARNASSE"
+      }
+    }
+  },
+  {
+    "id": "t06",
+    "question": "Combien de trains sont arrivés en retard de Strasbourg vers Paris en 2024 ?",
+    "attendu": [
+      1048
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2024",
+        "fin": "2024",
+        "depart": "STRASBOURG",
+        "arrivee": "PARIS EST"
+      }
+    }
+  },
+  {
+    "id": "t07",
+    "question": "De combien de points la ponctualité de tout le réseau a-t-elle changé entre 2024 et 2025 ?",
+    "attendu": [
+      1.4
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "comparer_periodes",
+      "arguments": {
+        "debut_a": "2024",
+        "fin_a": "2024",
+        "debut_b": "2025",
+        "fin_b": "2025"
+      }
+    }
+  },
+  {
+    "id": "t08",
+    "question": "De combien de points la ponctualité de Paris vers Lille a-t-elle changé entre 2023 et 2024 ?",
+    "attendu": [
+      0.8
+    ],
+    "texte": null,
+    "appel": {
+      "outil": "comparer_periodes",
+      "arguments": {
+        "debut_a": "2023",
+        "fin_a": "2023",
+        "debut_b": "2024",
+        "fin_b": "2024",
+        "depart": "PARIS NORD",
+        "arrivee": "LILLE"
+      }
+    }
+  },
+  {
+    "id": "t09",
+    "question": "Quelle liaison a la plus grande part de trains à plus de 15 minutes de retard en 2025 ?",
+    "attendu": [
+      56.5
+    ],
+    "texte": "STUTTGART",
+    "appel": {
+      "outil": "classement_liaisons",
+      "arguments": {
+        "debut": "2025",
+        "fin": "2025",
+        "n": 1
+      }
+    }
+  },
+  {
+    "id": "t10",
+    "question": "Quelle liaison a la plus petite part de trains à plus de 15 minutes de retard en 2024 ?",
+    "attendu": [
+      3.9
+    ],
+    "texte": "REIMS",
+    "appel": {
+      "outil": "classement_liaisons",
+      "arguments": {
+        "debut": "2024",
+        "fin": "2024",
+        "n": 1,
+        "ordre": "meilleures"
+      }
+    }
+  },
+  {
+    "id": "t11",
+    "question": "Quelle est la principale cause de retard de Lyon vers Paris en 2025, et quelle est sa part ?",
+    "attendu": [
+      23.1
+    ],
+    "texte": "gestion du trafic",
+    "appel": {
+      "outil": "causes_retard",
+      "arguments": {
+        "debut": "2025",
+        "fin": "2025",
+        "depart": "LYON PART DIEU",
+        "arrivee": "PARIS LYON"
+      }
+    }
+  },
+  {
+    "id": "t12",
+    "question": "Quelle est la ponctualité de Bordeaux vers Paris en 2030 ?",
+    "attendu": [],
+    "texte": null,
+    "piege": true,
+    "autorises": [
+      1,
+      9,
+      2018,
+      2026
+    ],
+    "appel": {
+      "outil": "taux_ponctualite",
+      "arguments": {
+        "debut": "2030",
+        "fin": "2030",
+        "depart": "Bordeaux",
+        "arrivee": "Paris"
+      }
+    }
+  }
+]

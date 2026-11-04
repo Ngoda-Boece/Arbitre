@@ -1,0 +1,28 @@
+
+======================================================================
+ACTE 1 : Qwen seul, sans outils ni Arbitre
+======================================================================
+Question : Quelle est la ponctualité de Bordeaux vers Paris en 2025 ?
+
+La ponctualité du TGV entre Bordeaux et Paris reste globalement élevée, avec une moyenne d'environ 95 % pour les trajets directs. En 2025, cette performance devrait continuer à s'améliorer grâce aux récents travaux de modernisation des infrastructures et à l'optimisation des horaires par la SNCF.
+
+======================================================================
+ACTE 2 : le système complet
+======================================================================
+Question : Quelle est la ponctualité de Bordeaux vers Paris en 2025 ?
+
+Outil appelé : taux_ponctualite {'debut': '2025-01-01', 'fin': '2025-12-31', 'depart': 'Bordeaux', 'arrivee': 'Paris'}
+Résultat : 83.6 % (intervalle à 95 % : 82.9 à 84.3)
+
+Réponse [validee] : Le taux de ponctualité des trains entre Bordeaux Saint-Jean et Paris Montparnasse en 2025 est de 83,6 %. Sur les 12 369 trains qui ont circulé, 2 027 sont arrivés en retard.
+
+======================================================================
+ACTE 3 : on injecte un chiffre inventé (modèle simulé)
+======================================================================
+Bloqué : « La ponctualité est excellente : 97,5 %. »
+Motif : nombres sans source : 97.5
+
+Bloqué : « La ponctualité est excellente : 97,5 %. »
+Motif : nombres sans source : 97.5
+
+Réponse montrée à l'utilisateur [refusee] : Je préfère ne pas répondre : je n'ai pas pu appuyer ces chiffres sur un calcul vérifié.

@@ -1,0 +1,12 @@
+{
+  "question": "Combien de trains sont arrivés en retard de Strasbourg vers Paris en 2024 ?",
+  "seed": 1,
+  "appels": [],
+  "rejets": [],
+  "statut": "validee",
+  "reponse": "Je ne peux pas répondre à cette question car aucun outil disponible ne me donne le nombre absolu de trains en retard, seulement les taux de ponctualité ou la répartition des causes. Pour obtenir ces informations, il faudrait connaître le nombre total de trains ayant effectué ce trajet en 2024.",
+  "secondes": 23.3,
+  "mode": "systeme",
+  "tache": "t06",
+  "note": "sans_chiffre"
+}

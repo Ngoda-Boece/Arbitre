@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L'Arbitre des trains</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&family=Overpass+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Moteur commun (dérivé de skills-slides/viewport-base.css) ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+:root{
+  --title-size:clamp(2rem,6.4vw,5.6rem);
+  --h2-size:clamp(1.5rem,3.8vw,3.2rem);
+  --h3-size:clamp(1rem,1.9vw,1.5rem);
+  --body-size:clamp(.9rem,1.45vw,1.2rem);
+  --small-size:clamp(.72rem,1vw,.9rem);
+  --label-size:clamp(.62rem,.85vw,.78rem);
+  --slide-padding:clamp(1.2rem,5vw,5rem);
+  --content-gap:clamp(.6rem,2.2vw,2rem);
+  --ease:cubic-bezier(.16,1,.3,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --chrome:var(--accent);
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3{font-family:var(--font-display);font-weight:inherit}
+h1{font-size:var(--title-size);line-height:.98}
+h2{font-size:var(--h2-size);line-height:1.08}
+h3{font-size:var(--h3-size);line-height:1.2}
+p,li{font-size:var(--body-size);line-height:1.55}
+small{font-size:var(--small-size)}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--chrome);outline-offset:3px}
+
+.deck{position:fixed;inset:0}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;
+  visibility:hidden;opacity:0;transform:var(--enter-from,translateY(4%) scale(.98));
+  transition:opacity .8s var(--ease),transform 1s var(--ease),visibility 0s linear 1s}
+.slide.past{transform:var(--exit-to,translateY(-4%) scale(.98))}
+.slide.active{visibility:visible;opacity:1;transform:none;transition-delay:0s;z-index:2}
+.slide-bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+.slide-content{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;
+  padding:var(--slide-padding);gap:var(--content-gap);max-height:100%;min-height:0}
+
+/* Entrées échelonnées : data-a + style="--d:.2s" */
+[data-a]{opacity:0;transition:opacity .9s var(--ease) var(--d,0s),transform 1.1s var(--ease) var(--d,0s),filter 1s var(--ease) var(--d,0s),clip-path 1.1s var(--ease) var(--d,0s)}
+[data-a=up]{transform:translateY(34px)}
+[data-a=down]{transform:translateY(-34px)}
+[data-a=left]{transform:translateX(-48px)}
+[data-a=right]{transform:translateX(48px)}
+[data-a=zoom]{transform:scale(.88)}
+[data-a=pop]{transform:scale(.6) rotate(-6deg);transition-timing-function:var(--spring)}
+[data-a=blur]{filter:blur(14px);transform:scale(1.04)}
+[data-a=wipe]{opacity:1;clip-path:inset(0 100% 0 0)}
+[data-a=rise]{opacity:1;clip-path:inset(100% 0 0 0);transform:translateY(.25em)}
+[data-a=tilt]{transform:perspective(800px) rotateX(35deg) translateY(30px)}
+.slide.active [data-a]{opacity:1;transform:none;filter:none;clip-path:inset(-20% -20% -20% -20%)}
+
+/* Chrome de navigation */
+.ch-progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--chrome);z-index:50;transition:width .6s var(--ease)}
+.ch-dots{position:fixed;right:clamp(.6rem,1.6vw,1.4rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.55rem;z-index:50}
+.ch-dots button{width:9px;height:9px;border-radius:50%;border:0;background:var(--chrome);opacity:.28;transition:opacity .3s,transform .3s var(--spring)}
+.ch-dots button.on,.ch-dots button:hover{opacity:1;transform:scale(1.45)}
+.ch-bar{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:clamp(.5rem,1.4vh,1rem) clamp(.8rem,2vw,1.6rem);z-index:50;font-size:var(--label-size);letter-spacing:.08em;pointer-events:none;color:var(--chrome-text,var(--text-muted))}
+.ch-bar>*{pointer-events:auto}
+.ch-home{text-decoration:none;text-transform:uppercase;opacity:.75;transition:opacity .2s}
+.ch-home:hover{opacity:1}
+.ch-hint{text-transform:uppercase;opacity:.55}
+.ch-nav{display:flex;align-items:center;gap:.6rem}
+.ch-nav button{width:2.1rem;height:2.1rem;border-radius:50%;border:1px solid currentColor;background:transparent;opacity:.7;display:grid;place-items:center;transition:opacity .2s,transform .2s}
+.ch-nav button:hover{opacity:1;transform:scale(1.08)}
+.ch-count{font-variant-numeric:tabular-nums;min-width:4.5em;text-align:center}
+.ch-overview{position:fixed;inset:0;z-index:60;display:none;padding:clamp(1.5rem,5vw,4rem);overflow:auto;
+  background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.ch-overview.open{display:block;animation:chFade .35s var(--ease)}
+.ch-overview h2{font-size:var(--h3-size);margin-bottom:1.2rem;color:var(--text)}
+.ch-overview ol{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem}
+.ch-overview button{width:100%;text-align:left;padding:1rem 1.1rem;border:1px solid color-mix(in srgb,var(--text) 18%,transparent);border-radius:12px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);transition:border-color .2s,transform .2s}
+.ch-overview button:hover{border-color:var(--chrome);transform:translateY(-2px)}
+.ch-overview button span{display:block;font-size:var(--label-size);opacity:.6;margin-bottom:.3rem}
+@keyframes chFade{from{opacity:0}to{opacity:1}}
+
+@media (max-width:760px){
+  .ch-dots,.ch-hint{display:none}
+  .slide-content{justify-content:flex-start;padding-top:clamp(3rem,9vh,5rem);padding-bottom:4.5rem;overflow-y:auto}
+}
+@media (max-height:600px){.ch-dots,.ch-hint{display:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.15s!important}
+  .slide,.slide.past{transform:none}
+  [data-a]{transform:none!important;filter:none!important;clip-path:none!important}
+}
+@media print{
+  html,body{overflow:visible;height:auto}
+  .deck{position:static}
+  .slide{position:relative;visibility:visible;opacity:1;transform:none;height:100vh;break-after:page}
+  [data-a]{opacity:1;transform:none;filter:none;clip-path:none}
+  .ch-progress,.ch-dots,.ch-bar,.ch-overview{display:none!important}
+}
+
+:root{
+  --bg:#0b2545; --bg-2:#0e2d52; --panel:#081a33; --flap:#0f2038; --flap-2:#16294a; --line:#25456f;
+  --text:#f1f4f8; --text-muted:#a9b9cd; --yellow:#ffd23f; --red:#ff6b57; --red-card:#d7263d; --green:#55d6a0;
+  --accent:#ffd23f; --chrome:#ffd23f;
+  --font-display:'Overpass',sans-serif; --font-body:'Overpass',sans-serif; --mono:'Overpass Mono',ui-monospace,monospace;
+  --enter-from:translateX(4%); --exit-to:translateX(-4%);
+  --sh-sm:0 1px 0 rgba(255,255,255,.05) inset,0 2px 6px rgba(0,0,0,.25); --sh-md:0 14px 34px rgba(0,0,0,.34); --sh-lg:0 24px 70px rgba(0,0,0,.45);
+}
+.slide{background:radial-gradient(90% 80% at 18% 8%,var(--bg-2),var(--bg) 72%)}
+.slide::after{content:"";position:absolute;left:0;right:0;bottom:0;height:clamp(.5rem,1.2vh,.8rem);z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(90deg,var(--yellow) 0 34px,var(--panel) 34px 68px);opacity:.75}
+.slide-content{max-width:1320px;width:100%;margin:0 auto}
+.tag{font-family:var(--mono);font-size:var(--label-size);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow);display:flex;align-items:center;gap:.8em}
+.tag b{background:var(--yellow);color:var(--panel);padding:.2em .55em .05em;border-radius:3px}
+h1,h2{font-weight:900;letter-spacing:-.015em}
+h2{max-width:28ch}
+.lead{color:var(--text-muted);max-width:68ch}
+.mono{font-family:var(--mono)}
+.note{font-family:var(--mono);font-size:var(--small-size);color:var(--text-muted);line-height:1.5}
+
+/* Palettes du tableau */
+.board{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-lg);padding:clamp(.6rem,1.4vw,1.2rem)}
+.flap{display:flex;flex-wrap:wrap;gap:.08em;font-family:var(--mono);font-weight:700;line-height:1;color:var(--yellow)}
+.fc{position:relative;display:inline-flex;align-items:center;justify-content:center;width:.86em;height:1.22em;padding-top:.1em;border-radius:.07em;
+  background:linear-gradient(var(--flap-2) 0 49.5%,#050f20 49.5% 50.5%,var(--flap) 50.5%);box-shadow:var(--sh-sm)}
+.fc.sp{background:transparent;box-shadow:none;width:.42em}
+.fc.w{color:var(--text)}.fc.r{color:var(--red)}.fc.g{color:var(--green)}
+
+/* 1. Titre */
+.s-title .slide-content{gap:clamp(1rem,2.6vh,2rem)}
+.s-title .board{align-self:flex-start;max-width:100%}
+.s-title .flap{font-size:clamp(2.3rem,8.2vw,7.2rem)}
+.s-title .flap+.flap{margin-top:.1em}
+.s-title p{font-size:clamp(1.05rem,2.2vw,1.8rem);max-width:34ch;line-height:1.28;font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.8rem;font-family:var(--mono);font-size:clamp(.8rem,1.15vw,1rem);color:var(--text-muted)}
+
+/* 2. Problème */
+.rows{display:flex;flex-direction:column;gap:.5rem}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:1rem;padding:.75rem .9rem;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row small{display:block;font-family:var(--mono);font-size:var(--label-size);color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.35rem}
+.row strong{font-size:var(--h3-size);font-weight:800}
+.row .flap{font-size:clamp(1.7rem,4.4vw,3.8rem)}
+blockquote{border-left:4px solid var(--red);padding:.1rem 0 .1rem 1rem;color:var(--text);font-size:var(--body-size);max-width:74ch;line-height:1.5}
+
+/* 3. La ligne */
+.line{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1rem;margin-top:clamp(1.2rem,3.4vh,2.6rem)}
+.line::before{content:"";position:absolute;left:10%;right:10%;top:1.05rem;height:6px;border-radius:3px;background:var(--line)}
+.train{position:absolute;top:.55rem;left:10%;width:3.2rem;height:1.5rem;margin-left:-1.6rem;border-radius:.8rem .3rem .3rem .8rem;background:var(--yellow);box-shadow:0 0 22px rgba(255,210,63,.45);animation:ride 9s var(--ease) infinite;transform:scaleX(-1)}
+@keyframes ride{0%{left:10%}20%{left:30%}40%{left:50%}60%{left:70%}80%,100%{left:90%}}
+.stop{position:relative;text-align:center;padding-top:3rem}
+.stop::before{content:"";position:absolute;top:.72rem;left:50%;width:1.3rem;height:1.3rem;margin-left:-.65rem;border-radius:50%;background:var(--bg);border:5px solid var(--text)}
+.stop.key::before{border-color:var(--red)}
+.stop h3{font-weight:800;margin-bottom:.35rem}
+.stop p{font-size:clamp(.82rem,1.22vw,1.05rem);color:var(--text-muted);line-height:1.42}
+.stop code{display:block;font-family:var(--mono);font-size:var(--small-size);color:var(--yellow);margin-top:.5rem;overflow-wrap:anywhere}
+.branch{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.branch div{padding:.8rem 1rem;border-radius:8px;background:var(--panel);border-left:5px solid var(--green);font-size:clamp(.85rem,1.25vw,1.08rem);line-height:1.45}
+.branch div+div{border-left-color:var(--red-card)}
+.branch b{font-size:var(--body-size);display:block}
+
+/* 4. Démo */
+.demo{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:clamp(.8rem,2vw,1.6rem);align-items:stretch}
+.src h3{font-size:var(--small-size);font-family:var(--mono);color:var(--yellow);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem;font-weight:700}
+.src dl{display:grid;grid-template-columns:1fr auto;gap:.36rem .8rem;font-family:var(--mono);font-size:var(--small-size)}
+.src dt{color:var(--text-muted)}.src dd{font-weight:700;text-align:right}
+.src .warn{color:var(--red)}
+.try{display:flex;flex-direction:column;gap:.7rem}
+.try label{font-weight:700}
+.try input{width:100%;padding:.72rem .85rem .55rem;border-radius:6px;border:2px solid var(--line);background:#fff;color:#0b2545;font:600 var(--body-size) var(--font-body)}
+.presets{display:flex;flex-wrap:wrap;gap:.4rem}
+.presets button{padding:.48rem .78rem .34rem;border:1px solid var(--line);border-radius:999px;background:var(--bg-2);font-family:var(--mono);font-size:var(--small-size);transition:border-color .2s,transform .2s}
+.presets button:hover{border-color:var(--yellow);transform:translateY(-1px)}
+.verdict{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1rem;align-items:center;min-height:7.2rem}
+.card-ref{width:clamp(3.4rem,6vw,5rem);aspect-ratio:3/4.2;border-radius:6px;background:var(--green);box-shadow:var(--sh-md);transition:transform .45s var(--spring),background .2s;display:grid;place-items:center;font-size:clamp(1.3rem,3vw,2.4rem);font-weight:900;color:var(--panel)}
+.verdict.no .card-ref{background:var(--red-card);color:#fff;transform:rotate(-8deg) scale(1.06)}
+.verdict.warn .card-ref{background:var(--yellow);transform:rotate(5deg)}
+.verdict h3{font-weight:900}
+.verdict p{font-size:clamp(.84rem,1.2vw,1.04rem);color:var(--text-muted);line-height:1.45}
+mark{background:none;color:var(--green);font-weight:800}
+mark.bad{color:var(--red)}
+
+/* 5. Données */
+.two{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(1rem,2.6vw,2.4rem);align-items:start}
+.count{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;font-family:var(--mono);font-size:clamp(1.8rem,4.2vw,3.4rem);font-weight:700;color:var(--yellow)}
+.count span{font-size:.5em;color:var(--text-muted)}
+.dec{list-style:none;display:flex;flex-direction:column;gap:.5rem;margin-top:.8rem}
+.dec li{display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:.8rem;font-size:clamp(.88rem,1.3vw,1.12rem);line-height:1.4}
+.dec b{font-family:var(--mono);color:var(--yellow);text-align:right;font-size:var(--body-size)}
+.suspect{border-left:5px solid var(--red-card);background:var(--panel);padding:.8rem 1rem;border-radius:0 8px 8px 0;margin-top:.9rem}
+.suspect h3{font-weight:800;font-size:var(--body-size)}
+.suspect p{font-size:clamp(.84rem,1.2vw,1.04rem);color:var(--text-muted);line-height:1.45}
+.bars{display:flex;flex-direction:column;gap:.7rem}
+.bar{display:grid;grid-template-columns:5.7em minmax(0,1fr) 4.6em;white-space:nowrap;align-items:center;gap:.6rem;font-family:var(--mono);font-size:var(--small-size)}
+.bar i{display:block;height:1.1rem;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i::before{content:"";display:block;height:100%;width:0;background:var(--yellow);transition:width 1.3s var(--ease) .5s}
+.slide.active .bar i::before{width:var(--w)}
+
+/* 6. Résultats */
+.res{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(1rem,2.4vw,2.2rem);align-items:center}
+table.kpi{width:100%;border-collapse:collapse;font-size:clamp(.84rem,1.2vw,1.04rem)}
+table.kpi th{font-family:var(--mono);font-size:var(--label-size);color:var(--text-muted);text-align:right;font-weight:600;padding:.3rem .4rem;border-bottom:1px solid var(--line)}
+table.kpi th:first-child,table.kpi td:first-child{text-align:left}
+table.kpi td{padding:.6rem .4rem .42rem;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono)}
+table.kpi td:first-child{font-family:var(--font-body);font-weight:600}
+table.kpi td b{font-size:clamp(1.1rem,2.3vw,1.9rem);color:var(--yellow)}
+table.kpi td.bad b{color:var(--red)}
+table.kpi small{display:block;color:var(--text-muted);font-size:var(--label-size)}
+.grid12{display:grid;grid-template-columns:auto repeat(3,clamp(1.2rem,2.2vw,2rem)) 1.8rem repeat(3,clamp(1.2rem,2.2vw,2rem));justify-content:center;gap:.2rem .26rem;align-items:center;font-family:var(--mono);font-size:var(--small-size)}
+.grid12 .h{color:var(--text-muted)}
+.grid12 .h.c{grid-column:span 3;white-space:nowrap}
+.grid12 s{display:block;height:clamp(1rem,2.05vh,1.45rem);border-radius:3px;text-decoration:none}
+.j{background:var(--green)}.f{background:var(--red-card)}.n{background:#58708f}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem 1.1rem;margin-top:.7rem;font-family:var(--mono);font-size:var(--small-size);color:var(--text-muted)}
+.legend span{display:inline-flex;align-items:center;gap:.4em}.legend s{width:.85em;height:.85em;border-radius:2px;display:inline-block}
+
+/* 7. Limites */
+.lim{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.6rem,1.4vw,1.1rem)}
+.lim article{background:var(--panel);border-radius:8px;padding:clamp(.8rem,1.4vw,1.2rem);border-top:4px solid var(--red-card);box-shadow:var(--sh-md)}
+.lim h3{font-weight:800;margin-bottom:.3rem}
+.lim p{font-size:clamp(.88rem,1.3vw,1.14rem);color:var(--text-muted);line-height:1.42}
+.lim code{font-family:var(--mono);color:var(--yellow)}
+
+/* 8. Billets */
+.tickets{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.7rem}
+.ticket{position:relative;background:#f4efe1;color:#10223c;border-radius:7px;padding:.8rem .75rem .65rem;box-shadow:var(--sh-md)}
+.ticket::after{content:"";position:absolute;left:.6rem;right:.6rem;top:3.1rem;border-top:2px dashed #b9b09a}
+.ticket b{display:block;font-family:var(--mono);font-size:clamp(1.3rem,2.5vw,2rem);line-height:1.2;color:#b3192d}
+.ticket h3{font-size:clamp(.86rem,1.25vw,1.1rem);font-weight:800;margin-top:.9rem;line-height:1.2}
+.ticket p{font-size:var(--small-size);line-height:1.35;margin-top:.35rem;color:#3a4a60}
+.reqs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem;font-size:var(--small-size)}
+.reqs div{border-left:3px solid var(--yellow);padding-left:.7rem;line-height:1.4;color:var(--text-muted)}
+.reqs b{color:var(--text);display:block;font-family:var(--mono)}
+.stack{display:flex;flex-wrap:wrap;gap:.4rem}
+.stack span{font-family:var(--mono);font-size:var(--label-size);padding:.28rem .6rem .16rem;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+
+/* 9. Fin */
+.s-end .slide-content{align-items:center;text-align:center}
+.s-end .flap{font-size:clamp(1.7rem,5.2vw,4.8rem);justify-content:center}
+.s-end h2{max-width:none}
+.cmd{font-family:var(--mono);font-size:var(--small-size);padding:.7rem 1rem .55rem;background:var(--panel);border-radius:6px;border:1px solid var(--line);overflow-wrap:anywhere}
+
+@media (max-width:760px){
+  .line{grid-template-columns:1fr;gap:.5rem;margin-top:.4rem}
+  .line::before,.train{display:none}
+  .stop{text-align:left;padding:0 0 0 1.9rem}.stop::before{left:0;top:.1rem;margin:0}
+  .demo,.two,.res,.lim,.branch{grid-template-columns:minmax(0,1fr)}
+  .tickets{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .reqs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ticket::after{display:none}.ticket h3{margin-top:.3rem}
+  .row{grid-template-columns:minmax(0,1fr)}
+  .s-title .flap{font-size:clamp(1.7rem,8.2vw,3rem)}
+  .note{font-size:.68rem;line-height:1.35}
+  .s-end .flap{font-size:1.32rem;flex-wrap:nowrap}
+  .verdict{min-height:0}.src dl{gap:.14rem .6rem}
+  table.kpi td{padding:.34rem .3rem .22rem}
+  .grid12 s{height:.8rem}.grid12{gap:.12rem .22rem}
+}
+@media (prefers-reduced-motion:reduce){.train{animation:none}}
+</style>
+</head>
+<body>
+<main class="deck">
+
+<section class="slide s-title" aria-label="L'Arbitre des trains">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 1</b> Coding for AI &amp; Data Science · Projet final</div>
+    <div class="board" data-a="zoom" style="--d:.1s">
+      <div class="flap" data-flap="L'ARBITRE"></div>
+      <div class="flap" data-flap="DES TRAINS"></div>
+    </div>
+    <p data-a="up" style="--d:.4s">Un petit système qui refuse tout chiffre que le code n'a pas calculé.</p>
+    <div class="meta" data-a="up" style="--d:.6s"><span>Ngoda Lontsi Ael Boece</span><span>Qwen3.5-4B, en local</span><span>Données SNCF 2018-2026</span></div>
+  </div>
+</section>
+
+<section class="slide" aria-label="Le problème">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 2</b> Le problème</div>
+    <h2 data-a="up" style="--d:.1s">Seul, Qwen annonce environ 95 %. Le fichier donne 83,6 %.</h2>
+    <p class="lead" data-a="up" style="--d:.2s">« Quelle est la ponctualité de Bordeaux vers Paris en 2025 ? »</p>
+    <div class="board rows" data-a="zoom" style="--d:.3s">
+      <div class="row"><div><small>Qwen seul, sans données</small><strong>Une réponse sûre d'elle</strong></div><div class="flap" data-flap="95 %" data-color="r"></div></div>
+      <div class="row"><div><small>Calcul sur 12 369 trains circulés</small><strong>Les données SNCF nettoyées</strong></div><div class="flap" data-flap="83,6 %" data-color="g"></div></div>
+    </div>
+    <blockquote data-a="up" style="--d:.5s">« Cette performance devrait continuer à s'améliorer grâce aux récents travaux de modernisation. »</blockquote>
+    <p class="note" data-a="up" style="--d:.6s">Réponse réelle de Qwen3.5-4B (seed 1). Le modèle prédit du texte plausible : il n'a consulté aucune donnée.</p>
+  </div>
+</section>
+
+<section class="slide" aria-label="Le fonctionnement">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 3</b> Le trajet d'une question</div>
+    <h2 data-a="up" style="--d:.1s">Le modèle rédige, le code calcule, l'Arbitre contrôle.</h2>
+    <div class="line" data-a="up" style="--d:.25s">
+      <span class="train" aria-hidden="true"></span>
+      <div class="stop"><h3>Question</h3><p>Posée en français.</p><code>agent.py</code></div>
+      <div class="stop"><h3>Qwen choisit</h3><p>Il demande un outil et ses paramètres.</p><code>4 outils autorisés</code></div>
+      <div class="stop"><h3>Python calcule</h3><p>Le taux et son intervalle, sur les vraies données.</p><code>outils.py</code></div>
+      <div class="stop"><h3>Qwen rédige</h3><p>Il écrit sa phrase avec le résultat.</p><code>MAX_TOURS = 6</code></div>
+      <div class="stop key"><h3>L'Arbitre</h3><p>Il contrôle chaque nombre de la réponse.</p><code>arbitre.py</code></div>
+    </div>
+    <div class="branch" data-a="up" style="--d:.5s">
+      <div><b>Chaque nombre a une source</b>La réponse est montrée.</div>
+      <div><b>Un nombre n'a pas de source</b>Rejet, une seule nouvelle chance, puis refus de répondre.</div>
+    </div>
+    <p class="note" data-a="up" style="--d:.6s">La règle est dans le code et non dans le prompt : une consigne peut être ignorée, un contrôle s'exécute à chaque réponse.</p>
+  </div>
+</section>
+
+<section class="slide" aria-label="Démo : tromper l'Arbitre">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 4</b> Démo simplifiée, à vous</div>
+    <h2 data-a="up" style="--d:.1s">Essayez de faire passer un chiffre à l'Arbitre.</h2>
+    <div class="demo" data-a="up" style="--d:.25s">
+      <div class="board src">
+        <h3>Résultat d'outil : Bordeaux → Paris, 2025</h3>
+        <dl>
+          <dt>Ponctualité</dt><dd>83,6 %</dd>
+          <dt>Retard</dt><dd>16,4 %</dd>
+          <dt>Intervalle, borne basse</dt><dd>82,9</dd>
+          <dt>Intervalle, borne haute</dt><dd>84,3</dd>
+          <dt>Trains circulés</dt><dd>12 369</dd>
+          <dt>Trains en retard</dt><dd>2 027</dd>
+          <dt>Niveau de confiance</dt><dd class="warn">95</dd>
+          <dt>Seuil de retard (min)</dt><dd>10</dd>
+          <dt>Mois couverts</dt><dd>12</dd>
+        </dl>
+      </div>
+      <div class="try">
+        <label for="reponse">La réponse du modèle</label>
+        <input id="reponse" autocomplete="off" value="La ponctualité atteint 97,5 %.">
+        <div class="presets" aria-label="Exemples">
+          <button data-t="La ponctualité est de 83,6 %.">Le vrai chiffre</button>
+          <button data-t="La ponctualité atteint 97,5 %.">Un chiffre inventé</button>
+          <button data-t="La ponctualité est d'environ 84 %.">Un arrondi</button>
+          <button data-t="Vingt pour cent des trains sont en retard.">Écrit en lettres</button>
+          <button data-t="La ponctualité est d'environ 95 %.">Le faux 95 %</button>
+        </div>
+        <div class="verdict" id="verdict" aria-live="polite">
+          <div class="card-ref" id="carte">✓</div>
+          <div><h3 id="vt">En attente</h3><p id="vd"></p></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" data-a="up" style="--d:.4s">Démo simplifiée : le contrôle de <span class="mono">arbitre.py</span> est réécrit en JavaScript pour cette page, le modèle n'est pas appelé. Les valeurs du résultat sont réelles.</p>
+  </div>
+</section>
+
+<section class="slide" aria-label="Les données">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 5</b> Données sales, décisions écrites</div>
+    <h2 data-a="up" style="--d:.1s">Le fichier semblait propre : 136 lignes ont été retirées.</h2>
+    <div class="two">
+      <div data-a="left" style="--d:.2s">
+        <div class="count" aria-label="De 12 907 à 12 771 lignes"><b data-count="12907">12907</b><span>→</span><b data-count="12771">12771</b><span>lignes</span></div>
+        <ul class="dec">
+          <li><b>73</b><span>lignes sans aucun train circulé</span></li>
+          <li><b>31</b><span>lignes aux compteurs contradictoires</span></li>
+          <li><b>32</b><span>lignes d'années entières sans aucun retard</span></li>
+        </ul>
+        <div class="suspect">
+          <h3>Paris → Italie : 0 retard en 14 mois</h3>
+          <p>Des trains partent pourtant en retard. Sans la règle, cette liaison sortait meilleure liaison de 2024. La cause n'est pas dans le fichier : retirer ces lignes est une décision.</p>
+        </div>
+      </div>
+      <div class="board" data-a="right" style="--d:.3s">
+        <h3 style="font-weight:800;margin-bottom:.35rem">La règle absente des colonnes</h3>
+        <p class="note" style="margin-bottom:.9rem">Le seuil de retard dépend du trajet, selon la description du jeu de données SNCF : 5 min sous 1h30, 10 min de 1h30 à 3h, 15 min au-delà.</p>
+        <div class="bars">
+          <div class="bar"><span>Seuil 5</span><i style="--w:41.3%"></i><span>41,3 %</span></div>
+          <div class="bar"><span>Seuil 10</span><i style="--w:70.5%"></i><span>70,5 %</span></div>
+          <div class="bar"><span>Seuil 15</span><i style="--w:97%"></i><span>97,0 %</span></div>
+        </div>
+        <p class="note" style="margin-top:.8rem">Part des retards qui dépassent 15 min, par seuil : les chiffres du fichier confirment la règle. Le classement utilise donc « plus de 15 min », le même critère pour toutes les liaisons.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" aria-label="Les résultats">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 6</b> Comparaison mesurée</div>
+    <h2 data-a="up" style="--d:.1s">11 réponses justes sur 12, aucun chiffre faux affirmé.</h2>
+    <div class="res">
+      <div data-a="left" style="--d:.2s">
+        <table class="kpi">
+          <thead><tr><th>Sur 12 questions</th><th>Système</th><th>Qwen seul</th></tr></thead>
+          <tbody>
+            <tr><td>Réponses justes</td><td><b>11,00</b><small>± 0,00</small></td><td class="bad"><b>0,33</b><small>± 0,58</small></td></tr>
+            <tr><td>Chiffres faux affirmés</td><td><b>0,00</b><small>± 0,00</small></td><td class="bad"><b>7,67</b><small>± 0,58</small></td></tr>
+            <tr><td>Sans chiffre</td><td><b>1,00</b><small>± 0,00</small></td><td><b>4,00</b><small>± 0,00</small></td></tr>
+            <tr><td>Temps par question</td><td><b>37,4 s</b></td><td><b>21,7 s</b></td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:.7rem">72 exécutions : 12 questions, 2 systèmes, 3 seeds. Moyenne et écart-type sur les seeds. Réponses connues calculées par un script séparé, puis croisées par un test.</p>
+      </div>
+      <div class="board" data-a="right" style="--d:.3s">
+        <div class="grid12" id="g12" role="img" aria-label="Résultat des 12 questions pour chaque seed : le système est juste partout sauf t06. Qwen seul a une seule réponse juste, sur t12."></div>
+        <div class="legend"><span><s class="j"></s>juste</span><span><s class="f"></s>chiffre faux</span><span><s class="n"></s>sans chiffre</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" aria-label="Les limites">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 7</b> Ce qui reste à prouver</div>
+    <h2 data-a="up" style="--d:.1s">Ce résultat vient surtout des outils, et l'Arbitre a des trous.</h2>
+    <div class="lim">
+      <article data-a="up" style="--d:.2s"><h3>Aucun blocage en conditions réelles</h3><p>L'Arbitre n'a rien rejeté sur les 36 exécutions du système. Son blocage est prouvé par les tests et un modèle simulé. Le système sans Arbitre n'a pas été mesuré.</p></article>
+      <article data-a="up" style="--d:.3s"><h3>Il contrôle l'origine, pas le sens</h3><p>« 95 % » passe, car 95 est le niveau de confiance. « 83 % » passe aussi, car c'est l'arrondi de la borne basse 82,9. Tout nombre du résultat sert de source.</p></article>
+      <article data-a="up" style="--d:.4s"><h3>Un échec expliqué : la question t06</h3><p>« Combien de trains en retard ? » : <code>appels: []</code>. Qwen croit que ses outils ne donnent que des taux et n'en appelle aucun, 3 fois sur 3. C'est faux, l'outil renvoie ce nombre.</p></article>
+      <article data-a="up" style="--d:.5s"><h3>Ce que les données ne disent pas</h3><p>Le fichier compte tous les trains : ce n'est pas un sondage, et l'intervalle est trop étroit car les retards d'une journée sont liés. Rien ne prouve pourquoi une liaison est en retard.</p></article>
+    </div>
+    <p class="note" data-a="up" style="--d:.6s">La mesure porte sur 12 questions simples. Le mode de calcul du taux n'a pas été confirmé comme celui de la SNCF.</p>
+  </div>
+</section>
+
+<section class="slide" aria-label="Briques et exigences">
+  <div class="slide-content">
+    <div class="tag" data-a="left"><b>Quai 8</b> Ce qui est rendu</div>
+    <h2 data-a="up" style="--d:.1s">5 briques sur 9, 106 tests, un seul modèle local.</h2>
+    <div class="tickets">
+      <div class="ticket" data-a="up" style="--d:.15s"><b>01</b><h3>Mon propre outil</h3><p>4 fonctions et une boucle écrites à la main, avec trace.</p></div>
+      <div class="ticket" data-a="up" style="--d:.22s"><b>03</b><h3>Règle dans le code</h3><p>Un chiffre inventé est bloqué par un test.</p></div>
+      <div class="ticket" data-a="up" style="--d:.29s"><b>06</b><h3>Données sales</h3><p>Journal de nettoyage, règle sourcée.</p></div>
+      <div class="ticket" data-a="up" style="--d:.36s"><b>08</b><h3>Incertitude</h3><p>Wilson et Newcombe, et leurs limites.</p></div>
+      <div class="ticket" data-a="up" style="--d:.43s"><b>09</b><h3>Comparaison</h3><p>72 exécutions, un échec expliqué.</p></div>
+    </div>
+    <div class="reqs" data-a="up" style="--d:.5s">
+      <div><b>R1 Il tourne</b>Depuis le README, sur une copie neuve.</div>
+      <div><b>R2 Il est vérifié</b>Tests sans modèle, à réponse connue.</div>
+      <div><b>R3 Journal IA</b>Dossier <span class="mono">ai_log/</span>.</div>
+      <div><b>R4 Soutenance</b>Démo en trois actes.</div>
+    </div>
+    <div class="stack" data-a="up" style="--d:.6s"><span>Python</span><span>pandas</span><span>pytest</span><span>uv</span><span>Ollama</span><span>Qwen3.5-4B Q4_K_M</span><span>Open data SNCF, ODbL</span></div>
+  </div>
+</section>
+
+<section class="slide s-end" aria-label="Conclusion">
+  <div class="slide-content">
+    <div class="tag" data-a="down"><b>Terminus</b></div>
+    <div class="board" data-a="zoom" style="--d:.1s">
+      <div class="flap" data-flap="PAS DE SOURCE"></div>
+      <div class="flap" data-flap="PAS DE CHIFFRE" data-color="r" style="margin-top:.1em"></div>
+    </div>
+    <h2 data-a="up" style="--d:.4s">Un modèle faillible devient utile quand le code le surveille.</h2>
+    <div class="cmd" data-a="up" style="--d:.55s">uv run python src/demo.py</div>
+    <p class="note" data-a="up" style="--d:.65s">Prochaine étape : relier chaque nombre à son rôle, pour fermer la faille du 95 %.</p>
+  </div>
+</section>
+
+</main>
+<script>
+/* ===== Moteur commun : navigation, compteurs, machine à écrire ===== */
+(() => {
+  const slides = [...document.querySelectorAll('.slide')];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cur = -1, last = 0;
+
+  const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+  const progress = el('div', 'ch-progress');
+  const dots = el('nav', 'ch-dots'); dots.setAttribute('aria-label', 'Diapositives');
+  const bar = el('div', 'ch-bar');
+  const home = el('a', 'ch-home', '← Tous les projets'); home.href = 'index.html';
+  const hint = el('span', 'ch-hint', '← → espace · O plan · F plein écran');
+  const nav = el('div', 'ch-nav');
+  const prevB = el('button', '', '↑'); prevB.setAttribute('aria-label', 'Diapositive précédente');
+  const count = el('span', 'ch-count');
+  const nextB = el('button', '', '↓'); nextB.setAttribute('aria-label', 'Diapositive suivante');
+  nav.append(prevB, count, nextB);
+  if (document.body.dataset.home !== 'none') bar.append(home); else bar.append(el('span'));
+  bar.append(hint, nav);
+  const live = el('div'); live.setAttribute('aria-live', 'polite'); live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
+  const ov = el('div', 'ch-overview'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Plan de la présentation');
+  const ovList = el('ol');
+  ov.append(el('h2', '', 'Plan — cliquez pour y aller'), ovList);
+  document.body.append(progress, dots, bar, live, ov);
+
+  slides.forEach((s, i) => {
+    const label = s.getAttribute('aria-label') || `Diapositive ${i + 1}`;
+    s.setAttribute('role', 'region');
+    const d = el('button'); d.setAttribute('aria-label', label); d.onclick = () => go(i); dots.append(d);
+    const li = el('li'); const b = el('button', '', `<span>${String(i + 1).padStart(2, '0')}</span>${label}`);
+    b.onclick = () => { toggleOv(false); go(i); }; li.append(b); ovList.append(li);
+  });
+
+  /* Compteurs : <span data-count="14859" data-dec="0" data-suffix=" €"> */
+  const fmt = (v, dec) => v.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec }).replace(/[  ]/g, ' ');
+  function runCounters(s) {
+    s.querySelectorAll('[data-count]').forEach(n => {
+      const to = parseFloat(n.dataset.count), dec = +(n.dataset.dec || 0), pre = n.dataset.prefix || '', suf = n.dataset.suffix || '';
+      const delay = parseFloat(n.dataset.delay || 0) * 1000, dur = +(n.dataset.dur || 1600);
+      if (reduce) { n.textContent = pre + fmt(to, dec) + suf; return; }
+      n.textContent = pre + fmt(0, dec) + suf;
+      const t0 = performance.now() + delay;
+      const tick = t => {
+        if (cur < 0 || slides[cur] !== s) return;
+        const k = Math.min(1, Math.max(0, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 4);
+        n.textContent = pre + fmt(to * e, dec) + suf;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+  /* Machine à écrire : <span data-type data-speed="28"> */
+  function runTypers(s) {
+    s.querySelectorAll('[data-type]').forEach(n => {
+      if (n.dataset.full == null) n.dataset.full = n.textContent;
+      const full = n.dataset.full, sp = +(n.dataset.speed || 26), delay = parseFloat(n.dataset.delay || 0) * 1000;
+      if (reduce) { n.textContent = full; return; }
+      n.textContent = ''; n.classList.add('typing');
+      let i = 0; const start = performance.now() + delay;
+      const tick = t => {
+        if (cur < 0 || slides[cur] !== s) { n.textContent = full; return; }
+        if (t >= start) { i = Math.min(full.length, Math.floor((t - start) / sp)); n.textContent = full.slice(0, i); }
+        if (i < full.length) requestAnimationFrame(tick); else n.classList.remove('typing');
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function go(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    if (i === cur) return;
+    const from = cur; cur = i;
+    slides.forEach((s, k) => {
+      s.classList.toggle('active', k === i);
+      s.classList.toggle('past', k < i);
+      s.setAttribute('aria-hidden', k !== i);
+      s.inert = k !== i;
+    });
+    [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+    progress.style.width = `${(slides.length > 1 ? i / (slides.length - 1) : 1) * 100}%`;
+    count.textContent = `${String(i + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+    document.body.dataset.slide = i;
+    /* la barre reprend les couleurs de la diapositive (claire ou sombre) */
+    const root = document.documentElement.style; root.removeProperty('--chrome'); root.removeProperty('--chrome-text');
+    const cs = getComputedStyle(slides[i]);
+    root.setProperty('--chrome', cs.getPropertyValue('--chrome').trim() || cs.getPropertyValue('--accent').trim());
+    root.setProperty('--chrome-text', cs.getPropertyValue('--text-muted').trim());
+    try { history.replaceState(null, '', `#slide-${i + 1}`); } catch (e) {}
+    live.textContent = slides[i].getAttribute('aria-label') || '';
+    runCounters(slides[i]); runTypers(slides[i]);
+    document.dispatchEvent(new CustomEvent('slide', { detail: { index: i, from, el: slides[i] } }));
+  }
+  const next = () => go(cur + 1), prev = () => go(cur - 1);
+  window.deck = { go, next, prev, get current() { return cur; }, slides };
+  prevB.onclick = prev; nextB.onclick = next;
+
+  const toggleOv = force => { const open = force ?? !ov.classList.contains('open'); ov.classList.toggle('open', open); if (open) ov.querySelectorAll('button')[cur]?.focus(); };
+  const typing = t => t.closest('input,textarea,select,[contenteditable="true"]');
+
+  document.addEventListener('keydown', e => {
+    if (typing(e.target)) { if (e.key === 'Escape') e.target.blur(); return; }
+    const k = e.key;
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(k)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(k)) { e.preventDefault(); prev(); }
+    else if (k === 'Home') go(0);
+    else if (k === 'End') go(slides.length - 1);
+    else if (k === 'o' || k === 'O' || k === 'Escape') toggleOv(k === 'Escape' ? false : undefined);
+    else if (k === 'f' || k === 'F') { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (err) {} }
+  });
+  addEventListener('wheel', e => {
+    if (ov.classList.contains('open') || e.target.closest('[data-scroll]')) return;
+    const now = Date.now();
+    if (Math.abs(e.deltaY) < 24 || now - last < 900) return;
+    last = now; e.deltaY > 0 ? next() : prev();
+  }, { passive: true });
+  let tx = 0, ty = 0;
+  addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  addEventListener('touchend', e => {
+    if (e.target.closest('[data-scroll],input,textarea,[type=range]')) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? next() : prev();
+  }, { passive: true });
+
+  /* Position du pointeur pour les parallaxes : --mx / --my entre -1 et 1 */
+  addEventListener('pointermove', e => {
+    document.documentElement.style.setProperty('--mx', (e.clientX / innerWidth * 2 - 1).toFixed(3));
+    document.documentElement.style.setProperty('--my', (e.clientY / innerHeight * 2 - 1).toFixed(3));
+  }, { passive: true });
+
+  const fromHash = () => { const m = location.hash.match(/slide-(\d+)/); return m ? +m[1] - 1 : 0; };
+  addEventListener('hashchange', () => go(fromHash()));
+  /* attendre les scripts propres au deck (ils écoutent l'événement « slide ») */
+  const start = () => requestAnimationFrame(() => go(fromHash()));
+  document.readyState === 'loading' ? addEventListener('DOMContentLoaded', start) : start();
+})();
+</script>
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const CH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+  /* Tableau à palettes : chaque case fait défiler des lettres avant de se fixer. */
+  function flap(el) {
+    const txt = el.dataset.flap, col = el.dataset.color || '';
+    el.setAttribute('role', 'img'); el.setAttribute('aria-label', txt);
+    (el._t || []).forEach(clearInterval); el._t = [];
+    el.innerHTML = [...txt].map(c => `<span class="fc ${c === ' ' ? 'sp' : col}" aria-hidden="true">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
+    if (reduce) return;
+    [...el.children].forEach((cell, i) => {
+      if (cell.classList.contains('sp')) return;
+      const fin = cell.textContent; let n = 7 + i * 2;
+      const t = setInterval(() => {
+        if (--n <= 0) { cell.textContent = fin; clearInterval(t); }
+        else cell.textContent = CH[Math.random() * CH.length | 0];
+      }, 55);
+      el._t.push(t);
+    });
+  }
+  const lancer = s => s.querySelectorAll('[data-flap]').forEach(flap);
+  document.querySelectorAll('[data-flap]').forEach(flap);
+  document.addEventListener('slide', e => lancer(e.detail.el));
+
+  /* Grille des 12 questions : j juste, f faux, n sans chiffre. Source : preuves/resultats.jsonl */
+  const G = [['t01','jjj','fff'],['t02','jjj','fff'],['t03','jjj','fff'],['t04','jjj','fff'],['t05','jjj','nff'],['t06','nnn','nnn'],
+             ['t07','jjj','fnn'],['t08','jjj','fff'],['t09','jjj','nnn'],['t10','jjj','nnn'],['t11','jjj','fff'],['t12','jjj','jff']];
+  const box = document.getElementById('g12');
+  box.innerHTML = '<span></span><span class="h c">Système</span><span></span><span class="h c">Qwen seul</span>' +
+    G.map(([id, a, b]) => `<span>${id}</span>${[...a].map(c => `<s class="${c}"></s>`).join('')}<span></span>${[...b].map(c => `<s class="${c}"></s>`).join('')}`).join('');
+
+  /* Démo simplifiée : portage de arbitre.py en JavaScript. */
+  const SOURCES = [83.6, 16.4, 82.9, 84.3, 12369, 2027, 95, 10, 12, 2025];
+  const ESP = '   ';
+  const NOMBRE = new RegExp(`(?<![\\p{L}\\d_.,])(?:\\d{1,3}(?:[${ESP}]\\d{3})+(?!\\d)(?:[.,]\\d+)?|\\d+(?:[.,]\\d+)?)`, 'gu');
+  const LETTRES = /(?<![\p{L}])(?:deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|mille)(?![\p{L}])[\s-]*(?:pour[\s-]?cent|%|points?|trains?|minutes?|min(?![\p{L}]))/giu;
+  const norm = s => s.replace(new RegExp(`[${ESP}]`, 'g'), '').replace(',', '.');
+  const arrondi = (x, d) => Number(x.toFixed(d));
+  const justifie = t => {
+    const v = parseFloat(t), d = t.includes('.') ? t.split('.')[1].length : 0;
+    return SOURCES.some(s => Math.abs(arrondi(s, d) - v) < 1e-9 || (v < 1 && Math.abs(arrondi(s / 100, d) - v) < 1e-9));
+  };
+  const entree = document.getElementById('reponse'), verdict = document.getElementById('verdict');
+  const carte = document.getElementById('carte'), vt = document.getElementById('vt'), vd = document.getElementById('vd');
+  const echap = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  function juger() {
+    const texte = entree.value;
+    const nombres = (texte.match(NOMBRE) || []).map(norm);
+    const sans = nombres.filter(n => !justifie(n)).concat(texte.match(LETTRES) || []);
+    const faille95 = nombres.includes('95');
+    verdict.className = 'verdict' + (!texte.trim() || sans.length ? ' no' : faille95 ? ' warn' : '');
+    if (!texte.trim()) { carte.textContent = '!'; vt.textContent = 'Rejetée'; vd.textContent = 'Réponse vide.'; return; }
+    if (sans.length) {
+      carte.textContent = '✕'; vt.textContent = 'Carton rouge';
+      vd.innerHTML = `Sans source : <mark class="bad">${sans.map(echap).join(', ')}</mark>. Le modèle a une seule nouvelle chance, puis le système refuse de répondre.`;
+    } else if (faille95) {
+      carte.textContent = '?'; vt.textContent = 'Validée, à tort';
+      vd.textContent = 'Faille réelle : 95 figure dans le résultat comme niveau de confiance. L\'Arbitre vérifie l\'origine du nombre, pas son sens.';
+    } else if (nombres.length) {
+      carte.textContent = '✓'; vt.textContent = 'Validée';
+      vd.innerHTML = `Source trouvée : <mark>${nombres.map(echap).join(', ')}</mark>. La réponse est montrée.`;
+    } else {
+      carte.textContent = '✓'; vt.textContent = 'Validée'; vd.textContent = 'Aucun chiffre à contrôler.';
+    }
+  }
+  entree.addEventListener('input', juger);
+  document.querySelectorAll('.presets button').forEach(b => b.onclick = () => { entree.value = b.dataset.t; juger(); });
+  juger();
+})();
+</script>
+</body>
+</html>
