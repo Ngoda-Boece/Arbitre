@@ -13,8 +13,7 @@ import argparse
 import outils
 from agent import repondre, repondre_seul
 
-QUESTION = "Quelle est la ponctualité de Bordeaux vers Paris en 2025 ?"
-
+QUESTION = "Cause principale des retards à Lyon"
 
 def faux_modele_menteur():
     """Fabrique un modèle simulé : il appelle le vrai outil, puis invente quand même 97,5 %.
